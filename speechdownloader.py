@@ -12,7 +12,7 @@ import numpy as np
 import librosa
 import pandas as pd
 
-import audioUtils
+import audioutils
 
 
 # ##################
