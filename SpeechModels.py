@@ -20,8 +20,8 @@ def ConvSpeechModel(nCategories, samplingrate=16000, inputLength=16000):
 
     x = L.Reshape((1, -1))(inputs)
 
-    x = Melspectrogram(n_dft=1024, n_hop=128, input_shape=(1, inputLength),
-                       padding='same', sr=samplingrate, n_mels=80,
+    x = Melspectrogram(n_dft=1024, n_hop=164, input_shape=(1, inputLength),
+                       padding='same', sr=samplingrate, n_mels=20,
                        fmin=40.0, fmax=samplingrate / 2, power_melgram=1.0,
                        return_decibel_melgram=True, trainable_fb=False,
                        trainable_kernel=False,
@@ -35,30 +35,35 @@ def ConvSpeechModel(nCategories, samplingrate=16000, inputLength=16000):
     # x = Reshape((94,80)) (x) #this is strange - but now we have (batch_size,
     # sequence, vec_dim)
 
-    c1 = L.Conv2D(20, (5, 1), activation='relu', padding='same')(x)
+    c1 = L.Conv2D(12, (3, 3), activation='relu', padding='same')(x)
     c1 = L.BatchNormalization()(c1)
-    p1 = L.MaxPooling2D((2, 1))(c1)
-    p1 = L.Dropout(0.03)(p1)
+    p1 = L.MaxPooling2D((3, 3),strides=(2,2))(c1)
 
-    c2 = L.Conv2D(40, (3, 3), activation='relu', padding='same')(p1)
+    c2 = L.Conv2D(24, (3, 3), activation='relu', padding='same')(p1)
     c2 = L.BatchNormalization()(c2)
-    p2 = L.MaxPooling2D((2, 2))(c2)
-    p2 = L.Dropout(0.01)(p2)
+    p2 = L.MaxPooling2D((3, 3),strides=(2,2))(c2)
+  
 
-    c3 = L.Conv2D(80, (3, 3), activation='relu', padding='same')(p2)
+    c3 = L.Conv2D(48, (3, 3), activation='relu', padding='same')(p2)
     c3 = L.BatchNormalization()(c3)
-    p3 = L.MaxPooling2D((2, 2))(c3)
+    p3 = L.MaxPooling2D((3, 3),strides=(2,2))(c3)
 
-    p3 = L.Flatten()(p3)
-    p3 = L.Dense(64, activation='relu')(p3)
-    p3 = L.Dense(32, activation='relu')(p3)
+    c4 = L.Conv2D(48,(3,3), activation='relu', padding='same')(p3)
+    c4 = L.BatchNormalization()(c4)
 
-    output = L.Dense(nCategories, activation='softmax')(p3)
+    c5 = L.Conv2D(48,(3,3), activation='relu', padding='same') (c4)
+    c5 = L.BatchNormalization()(c5)
+    p4 = L.MaxPooling2D((3,1),)(c5)
+    p4 = L.Dropout(0.2)(p4)
+
+    p4 = L.Flatten()(p4)
+    p4 = L.Dense(30, activation='relu')(p4)
+
+    output = L.Dense(nCategories, activation='softmax')(p4)
 
     model = Model(inputs=[inputs], outputs=[output], name='ConvSpeechModel')
 
     return model
-
 
 def RNNSpeechModel(nCategories, samplingrate=16000, inputLength=16000):
     # simple LSTM
